@@ -1,0 +1,16 @@
+{
+  "name": "MyDrive · 星瑞车况",
+  "short_name": "MyDrive",
+  "description": "25 款吉利星瑞（KX11）信息展示 App · 只读",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0D10",
+  "theme_color": "#0B0D10",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

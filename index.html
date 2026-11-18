@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>星瑞车况 · MyDrive</title>
+<meta name="theme-color" content="#0B0D10">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyDrive">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    --bg:#0B0D10; --surface:#14171C; --surface-2:#1C2027; --surface-3:#242932;
+    --text:#F2F4F7; --text-2:#A0A8B4; --text-3:#6B7480;
+    --accent:#4ADE80; --accent-soft:rgba(74,222,128,.12);
+    --blue:#60A5FA; --blue-soft:rgba(96,165,250,.12);
+    --amber:#FBBF24; --amber-soft:rgba(251,191,36,.12);
+    --red:#F87171; --red-soft:rgba(248,113,113,.12);
+    --purple:#A78BFA; --purple-soft:rgba(167,139,250,.12);
+    --border:rgba(255,255,255,.08); --border-2:rgba(255,255,255,.14);
+    --radius:16px; --radius-sm:10px;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  html[data-theme="light"]{
+    --bg:#F7F8FA; --surface:#FFFFFF; --surface-2:#F1F3F6; --surface-3:#E7EAEF;
+    --text:#12151A; --text-2:#5A636F; --text-3:#8A93A0;
+    --accent:#16A34A; --accent-soft:rgba(22,163,74,.10);
+    --blue:#2563EB; --blue-soft:rgba(37,99,235,.10);
+    --amber:#B45309; --amber-soft:rgba(180,83,9,.10);
+    --red:#DC2626; --red-soft:rgba(220,38,38,.10);
+    --purple:#7C3AED; --purple-soft:rgba(124,58,237,.10);
+    --border:rgba(0,0,0,.08); --border-2:rgba(0,0,0,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.6;min-height:100vh;transition:background .25s,color .25s}
+  .app{max-width:440px;margin:0 auto;padding:0 18px 110px;position:relative;min-height:100vh}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;position:sticky;top:0;background:var(--bg);z-index:50;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--blue));display:grid;place-items:center;font-size:17px}
+  .brand-txt strong{display:block;font-size:16px;font-weight:650;letter-spacing:-.2px}
+  .brand-txt span{display:block;font-size:11.5px;color:var(--text-3);letter-spacing:.3px}
+  .icon-btn{width:36px;height:36px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;font-size:15px;display:grid;place-items:center;transition:all .18s;font-family:inherit}
+  .icon-btn:hover{border-color:var(--border-2);color:var(--text)}
+
+  .status-bar{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);margin-bottom:14px;font-size:12px;color:var(--text-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
+  .dot.mock{background:var(--amber)}
+  .dot.live{background:var(--red);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .status-bar b{color:var(--text);font-weight:550}
+  .status-bar .grow{flex:1}
+
+  .scope-note{font-size:11.5px;line-height:1.6;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px}
+  .scope-note b{color:var(--accent);font-weight:550}
+
+  .hero{background:linear-gradient(145deg,var(--surface-2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;top:-60px;right:-60px;width:170px;height:170px;border-radius:50%;background:var(--accent-soft);pointer-events:none}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;position:relative;z-index:1}
+  .hero h2{font-size:19px;font-weight:650;letter-spacing:-.3px}
+  .hero .vin{font-family:var(--mono);font-size:11.5px;color:var(--text-3);margin-top:2px;letter-spacing:.5px}
+  .range{text-align:right;position:relative;z-index:1}
+  .range-val{font-size:30px;font-weight:700;letter-spacing:-1.2px;line-height:1}
+  .range-val small{font-size:13px;font-weight:500;color:var(--text-2);margin-left:2px}
+  .range-lbl{font-size:11.5px;color:var(--text-3);margin-top:3px}
+  .bar{height:7px;border-radius:4px;background:var(--surface-3);overflow:hidden;margin:14px 0 8px;position:relative;z-index:1}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--blue));transition:width .6s cubic-bezier(.4,0,.2,1)}
+  .bar-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);position:relative;z-index:1}
+  .bar-meta b{color:var(--text);font-weight:600}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 11px}
+  .stat-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;margin-bottom:8px}
+  .stat-val{font-size:17px;font-weight:650;letter-spacing:-.4px}
+  .stat-val small{font-size:11px;font-weight:500;color:var(--text-3)}
+  .stat-lbl{font-size:11px;color:var(--text-3);margin-top:1px}
+
+  .tabs{display:flex;gap:5px;background:var(--surface);padding:4px;border-radius:13px;border:1px solid var(--border);margin-bottom:16px;position:sticky;top:77px;z-index:40;overflow-x:auto}
+  .tab{flex:1;min-width:64px;padding:9px 4px;border:none;background:transparent;color:var(--text-2);font-size:13px;font-weight:500;border-radius:9px;cursor:pointer;transition:all .18s;font-family:inherit;white-space:nowrap}
+  .tab.active{background:var(--surface-3);color:var(--text);font-weight:600}
+
+  .page{display:none}
+  .page.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:11px}
+  .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+  .card-h h3{font-size:14.5px;font-weight:600;letter-spacing:-.2px}
+  .badge{font-size:10.5px;padding:3px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+  .badge.gray{background:var(--surface-3);color:var(--text-3)}
+  .badge.amber{background:var(--amber-soft);color:var(--amber)}
+  .badge.red{background:var(--red-soft);color:var(--red)}
+  .card-note{font-size:11px;color:var(--text-3);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+  .row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px}
+  .row:last-child{border-bottom:none;padding-bottom:0}
+  .row:first-of-type{padding-top:0}
+  .row-l{display:flex;align-items:center;gap:9px;font-size:13px;min-width:0}
+  .row-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;flex-shrink:0}
+  .row-r{font-size:13px;font-weight:550;color:var(--text-2);text-align:right;white-space:nowrap}
+  .row-r b{color:var(--text);font-weight:600}
+  .row-sub{font-size:10.5px;color:var(--text-3);margin-top:1px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .mini{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px}
+  .mini-l{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:5px}
+  .mini-v{font-size:15px;font-weight:650;margin-top:4px;letter-spacing:-.3px}
+  .mini-v small{font-size:10.5px;color:var(--text-3);font-weight:500}
+
+  .chart{display:flex;align-items:flex-end;gap:5px;height:110px;padding-top:10px}
+  .chart-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center}
+  .chart-bar{width:100%;border-radius:5px 5px 2px 2px;background:var(--surface-3);transition:height .5s cubic-bezier(.4,0,.2,1);min-height:3px}
+  .chart-col.active .chart-bar{background:linear-gradient(180deg,var(--accent),var(--accent-soft))}
+  .chart-col.warn .chart-bar{background:linear-gradient(180deg,var(--amber),var(--amber-soft))}
+  .chart-lbl{font-size:10px;color:var(--text-3)}
+
+  /* 车模（原创 SVG 示意图，非官方资源） */
+  .car-card{padding:14px 12px 12px}
+  .car-stage{--car-body:#59626e;--car-hi:#8a94a1;--car-lo:#383f49;--car-stroke:rgba(255,255,255,.18);position:relative;border-radius:12px;background:radial-gradient(ellipse 70% 55% at 50% 42%,var(--surface-2),var(--surface) 72%);border:1px solid var(--border);padding:6px 4px 2px;transition:background .3s}
+  .car-stage[data-color="white"]{--car-body:#dde3ea;--car-hi:#ffffff;--car-lo:#a7b1bd;--car-stroke:rgba(0,0,0,.16)}
+  .car-stage[data-color="black"]{--car-body:#242a33;--car-hi:#4c5561;--car-lo:#11151b;--car-stroke:rgba(255,255,255,.13)}
+  .car-svg{display:block;width:100%;height:auto;max-height:200px}
+  .car-svg .hot{cursor:pointer}
+  .car-svg .hot .ring{fill:var(--accent);opacity:.18;animation:hotbreath 2s ease-in-out infinite}
+  .car-svg .hot .core{fill:var(--accent);stroke:var(--bg);stroke-width:2;transition:r .15s}
+  .car-svg .hot.sel .ring{opacity:.45}
+  .car-svg .hot.sel .core{r:8}
+  .car-svg .hot.warn .ring,.car-svg .hot.warn .core{fill:var(--amber)}
+  .car-svg .hot:hover .core{r:8}
+  @keyframes hotbreath{0%,100%{opacity:.14}50%{opacity:.38}}
+  .car-tools{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}
+  .car-colors{display:flex;gap:7px;align-items:center}
+  .car-color{width:21px;height:21px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:inset 0 0 0 1px var(--border-2);transition:transform .15s}
+  .car-color:hover{transform:scale(1.12)}
+  .car-color.on{border-color:var(--accent)}
+  .view-btns{display:flex;gap:4px}
+  .view-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .18s}
+  .view-btn.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+  .car-info{margin-top:10px;padding:9px 11px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px}
+  .car-info .ci-l{display:flex;align-items:center;gap:7px;color:var(--text-2);min-width:0}
+  .car-info .ci-l b{color:var(--text);font-weight:600;white-space:nowrap}
+  .car-info .ci-v{font-weight:650;color:var(--accent);white-space:nowrap}
+  .car-info .ci-f{font-family:var(--mono);font-size:9.5px;color:var(--text-3)}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:12px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);cursor:pointer;transition:all .18s;font-family:inherit}
+  .chip:hover{border-color:var(--border-2);color:var(--text)}
+  .chip.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+
+  .code{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--text-2);overflow-x:auto;margin-bottom:11px;white-space:pre}
+  .code .k{color:var(--accent)}
+  .code .s{color:var(--amber)}
+  .code .c{color:var(--text-3)}
+
+  .btn{display:block;width:100%;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:var(--bg);font-size:13.5px;font-weight:650;cursor:pointer;font-family:inherit;transition:opacity .18s}
+  .btn:hover{opacity:.88}
+  .btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border);font-weight:550}
+
+  .nav{position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--border);padding:9px 0 16px;z-index:60}
+  .nav-in{max-width:440px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  .nav-btn{border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;color:var(--text-3);font-size:10.5px;font-family:inherit;transition:color .18s}
+  .nav-btn.active{color:var(--accent)}
+  .nav-btn i{font-size:17px;font-style:normal}
+
+  .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--surface-3);border:1px solid var(--border-2);color:var(--text);padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;pointer-events:none;transition:all .26s;z-index:200;max-width:88%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (min-width:680px){ .app{border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">◆</div>
+      <div class="brand-txt"><strong>MyDrive</strong><span id="brandSub">星瑞车况 · 只读展示</span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" id="themeBtn" title="切换主题">◐</button>
+      <button class="icon-btn" id="refreshBtn" title="刷新">⟳</button>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <span class="dot mock" id="statusDot"></span>
+    <b id="statusTitle">Mock 数据源</b>
+    <span class="grow"></span>
+    <span id="statusMeta">演示模式</span>
+  </div>
+
+  <!-- 车模：置于状态栏下方（用户指定位置） -->
+  <div class="card car-card">
+    <div class="card-h"><h3>车辆模型 · 交互查看</h3><span class="badge gray" id="carViewLbl">侧视</span></div>
+    <div class="car-stage" id="carStage" data-color="gray"><div id="carModel"></div></div>
+    <div class="car-tools">
+      <div class="car-colors">
+        <button class="car-color on" data-color="gray"  style="background:linear-gradient(135deg,#8a94a1,#383f49)" title="苍穹灰"></button>
+        <button class="car-color"    data-color="white" style="background:linear-gradient(135deg,#ffffff,#a7b1bd)" title="珍珠白"></button>
+        <button class="car-color"    data-color="black" style="background:linear-gradient(135deg,#4c5561,#11151b)" title="曜石黑"></button>
+      </div>
+      <div class="view-btns">
+        <button class="view-btn on" data-view="side">侧视</button>
+        <button class="view-btn" data-view="top">俯视</button>
+      </div>
+    </div>
+    <div class="car-info" id="carInfo"><div class="ci-l">◉ <span>点击车模标记，查看该部位实时状态</span></div></div>
+    <div class="card-note">原创 SVG 示意图，非吉利官方模型资源。热点状态来自车况字段，接入真实数据后自动同步。</div>
+  </div>
+
+  <div class="scope-note">范围：<b>吉利品牌 · 2025 款星瑞（KX11）</b> · 纯信息展示 · 无车控 · 无商城/社区<br>字段来自官方 App 内的 5 套车辆状态模型，展示项多于官方界面。</div>
+
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <h2 id="carName">星瑞 2.0T</h2>
+        <div class="vin" id="carVin">LJU······KX11</div>
+      </div>
+      <div class="range">
+        <div class="range-val"><span id="rangeVal">—</span><small>km</small></div>
+        <div class="range-lbl">剩余续航</div>
+      </div>
+    </div>
+    <div class="bar"><div class="bar-fill" id="fuelBar" style="width:0%"></div></div>
+    <div class="bar-meta">
+      <span>油量 <b id="fuelVal">—</b></span>
+      <span>总里程 <b id="odoVal">—</b></span>
+      <span>均耗 <b id="effVal">—</b></span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-ico" style="background:var(--amber-soft);color:var(--amber)">🌡</div>
+      <div class="stat-val" id="stCoolant">—</div>
+      <div class="stat-lbl">冷却液温度</div>
+    </div>
+    <div class="stat">
+      <div class="stat-ico" style="background:var(--blue-soft);color:var(--blue)">🛢</div>
+      <div class="stat-val" id="stOil">—</div>
+      <div class="stat-lbl">机油状态</div>
+    </div>
+    <div class="stat">
+      <div class="stat-ico" style="background:var(--purple-soft);color:var(--purple)">🔋</div>
+      <div class="stat-val" id="stBattery">—</div>
+      <div class="stat-lbl">电瓶电压</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-page="overview">车况</button>
+    <button class="tab" data-page="body">车身</button>
+    <button class="tab" data-page="health">健康</button>
+    <button class="tab" data-page="trips">行程</button>
+    <button class="tab" data-page="setup">接入</button>
+  </div>
+
+  <!-- 车况总览 -->
+  <div class="page active" id="page-overview">
+    <div class="card">
+      <div class="card-h"><h3>发动机与油液</h3><span class="badge">官方较少展示</span></div>
+      <div id="engineBox"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>实时行车数据</h3><span class="badge gray">行驶中有效</span></div>
+      <div class="grid2" id="driveGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>数据新鲜度</h3><span class="badge gray">官方少展示</span></div>
+      <div id="freshness"></div>
+    </div>
+  </div>
+
+  <!-- 车身 -->
+  <div class="page" id="page-body">
+    <div class="card">
+      <div class="card-h"><h3>车门与开闭件</h3><span class="badge" id="bodyBadge">—</span></div>
+      <div id="doors"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>逐轮制动状态</h3><span class="badge gray">胎压/胎温</span></div>
+      <div id="tyres"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>座舱与灯光</h3></div>
+      <div id="cabin"></div>
+    </div>
+  </div>
+
+  <!-- 健康 -->
+  <div class="page" id="page-health">
+    <div class="card">
+      <div class="card-h"><h3>保养提醒</h3><span class="badge" id="maintBadge">—</span></div>
+      <div id="maintenance"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>告警集中展示</h3><span class="badge gray" id="warnCount">—</span></div>
+      <div id="warnings"></div>
+      <div class="card-note">官方通常弹窗提示，此处聚合为列表便于集中查看。</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>深度诊断</h3><span class="badge amber">待授权</span></div>
+      <div id="diagnose"></div>
+    </div>
+  </div>
+
+  <!-- 行程 -->
+  <div class="page" id="page-trips">
+    <div class="card">
+      <div class="card-h"><h3>近 7 日里程</h3><span class="badge gray" id="weekTotal">—</span></div>
+      <div class="chart" id="mileageChart"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>单次行程记录</h3><span class="badge">含单次油耗</span></div>
+      <div id="tripList"></div>
+      <div class="card-note">字段：<span style="font-family:var(--mono);font-size:10.5px">startOdometer / endOdometer / driFuel / FUEL_CONSUMPTION_SINGLE_TIME</span></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>最后位置</h3></div>
+      <div id="location"></div>
+    </div>
+  </div>
+
+  <!-- 接入 -->
+  <div class="page" id="page-setup">
+    <div class="card">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:5px">数据源适配器</h3>
+      <p style="font-size:12px;color:var(--text-3);line-height:1.6;margin-bottom:12px">UI 与数据源解耦。拿到官方 AK/SK 后只替换适配器，界面零改动。当前为纯静态离线版本，不依赖任何云服务。</p>
+      <div class="chips">
+        <button class="chip on" data-adapter="mock">Mock 演示</button>
+        <button class="chip" data-adapter="openapi">官方开放平台</button>
+      </div>
+      <div class="code"><span class="c">// 第一阶段：只读，不接任何控制接口</span>
+<span class="k">class</span> <span class="s">GeelyInfoAdapter</span> {
+  <span class="k">async</span> <span class="s">fetchVehicleStatus</span>() {
+    <span class="k">return</span> api.<span class="s">post</span>(<span class="s">'/openapi/v1/vehicle/status'</span>, {
+      <span class="s">app_id</span>: APP_ID,
+      <span class="s">vin</span>: MY_XINGRUI_VIN,
+      <span class="s">sign</span>: <span class="s">hmacSha256</span>(params, APP_SECRET)
+    })
+  }
+}</div>
+      <button class="btn" id="applyBtn">前往吉利云申请 AK/SK</button>
+      <div style="height:9px"></div>
+      <button class="btn ghost" id="scopeBtn">查看车控难点说明</button>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>执行步骤</h3></div>
+      <div id="steps"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>边界</h3></div>
+      <div class="row"><div class="row-l"><span class="row-ico" style="background:var(--accent-soft);color:var(--accent)">✓</span>界面自研</div><div class="row-r">零法律风险</div></div>
+      <div class="row"><div class="row-l"><span class="row-ico" style="background:var(--accent-soft);color:var(--accent)">✓</span>只读信息展示</div><div class="row-r">低风险</div></div>
+      <div class="row"><div class="row-l"><span class="row-ico" style="background:var(--amber-soft);color:var(--amber)">!</span>车控写操作</div><div class="row-r">需官方授权</div></div>
+      <div class="row"><div class="row-l"><span class="row-ico" style="background:var(--red-soft);color:var(--red)">✕</span>逆向签名下发指令</div><div class="row-r">高风险</div></div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-in">
+      <button class="nav-btn active" data-nav="overview"><i>◉</i>车况</button>
+      <button class="nav-btn" data-nav="body"><i>⊞</i>车身</button>
+      <button class="nav-btn" data-nav="health"><i>✚</i>健康</button>
+      <button class="nav-btn" data-nav="trips"><i>◫</i>行程</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const MOCK={
+  vehicle:{name:"星瑞 2.0T 旗舰型",vin:"LJU8A5248SX000KX11",plate:"浙A·8K911",modelYear:"2025",color:"苍穹灰",seriesCode:"KX11"},
+  fuel:{levelPct:68,capacity:50,rangeKm:412,odoKm:28640,avgConsumption:7.4,instantConsumption:6.8,singleTripConsumption:7.1},
+  engine:{coolantTemp:91,oilLevel:"正常",oilPressure:"正常",oilTemp:96,oilService:false,brakeFluid:"正常",batteryVoltage:12.6,engineStatus:"已熄火",hoodClosed:true},
+  drive:{speed:0,rpm:0,gear:"P",epb:true,brake:"未制动"},
+  freshness:{lastUpdate:"2026-11-19 00:06:32",reportTime:"00:06:28",upload:"00:06:30",dataTime:"00:06:25",source:"TSP 云端"},
+  body:{
+    doors:[{n:"主驾门",v:"关闭",w:0},{n:"副驾门",v:"关闭",w:0},{n:"左后门",v:"关闭",w:0},{n:"右后门",v:"关闭",w:0}],
+    lock:"已上锁",windows:[{n:"主驾车窗",v:"关闭"},{n:"副驾车窗",v:"关闭"},{n:"左后车窗",v:"关闭"},{n:"右后车窗",v:"关闭"}],
+    sunroof:"关闭",trunk:"关闭",hood:"关闭",
+    tyres:[{n:"左前",p:2.5,t:24,w:0},{n:"右前",p:2.5,t:25,w:0},{n:"左后",p:2.4,t:23,w:1},{n:"右后",p:2.4,t:24,w:0}],
+    seatHeat:"关闭",seatVent:"关闭",lighting:"未开启",ac:"关闭",inCarTemp:22,outsideTemp:9
+  },
+  health:{
+    maintenance:{distanceToService:4200,lastService:"2026-05-12",nextDate:"2027-05-12",status:"正常"},
+    warnings:[
+      {n:"右后轮胎压偏低",lv:"注意",c:"amber"},
+      {n:"机油保养提醒",lv:"提示",c:"gray"}
+    ],
+    diagnose:{items:[{n:"发动机系统",v:"正常"},{n:"制动系统",v:"正常"},{n:"车身系统",v:"正常"},{n:"电气系统",v:"1 项待确认"}]}
+  },
+  trips:{
+    week:[42,86,31,74,58,95,36],
+    list:[
+      {t:"11-18 08:12",d:"家 → 公司",km:32.4,min:41,fuel:2.3,start:28020,end:28052},
+      {t:"11-17 18:50",d:"公司 → 家",km:28.1,min:36,fuel:2.0,start:27991,end:28019},
+      {t:"11-16 12:35",d:"商场短途",km:6.8,min:18,fuel:0.6,start:27984,end:27991},
+      {t:"11-15 09:20",d:"高速往返",km:118.0,min:82,fuel:8.1,start:27866,end:27984}
+    ],
+    location:{address:"杭州市余杭区 · 文一西路",lat:"30.2712",lng:"120.0718",time:"00:05"}
+  }
+};
+
+const MockAdapter={id:"mock",async fetch(){return JSON.parse(JSON.stringify(MOCK));}};
+const OpenApiAdapter={
+  id:"openapi",appId:"",appSecret:"",base:"https://otasea-api-cn.geely.com/openapi/v1/",
+  async post(path,body){
+    const nonce=Math.random().toString(36).slice(2);
+    const payload=Object.assign({app_id:this.appId,nonce,timestamp:Date.now()},body||{});
+    const res=await fetch(this.base+path,{method:"POST",headers:{"Content-Type":"application/json;charset=UTF-8"},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const j=await res.json();
+    if(j.success===false) throw new Error(j.sub_msg||j.msg||"接口返回失败");
+    return j.data||j;
+  },
+  async fetch(){
+    if(!this.appId) throw new Error("尚未配置 app_id，请先在吉利云开放平台申请");
+    const st=await this.post("vehicle/status",{vin:"YOUR_XINGRUI_VIN"});
+    return Object.assign({},MOCK,st);
+  }
+};
+const ADAPTERS={mock:MockAdapter,openapi:OpenApiAdapter};
+let current="mock",data=null;
+
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function row(ico,bg,fg,label,val,sub){return '<div class="row"><div class="row-l"><span class="row-ico" style="background:'+bg+';color:'+fg+'">'+ico+'</span><div>'+label+(sub?'<div class="row-sub">'+sub+'</div>':'')+'</div></div><div class="row-r">'+val+'</div></div>';}
+function mini(l,v,unit,ico,bg,fg){return '<div class="mini"><div class="mini-l"><span style="color:'+fg+'">'+ico+'</span>'+l+'</div><div class="mini-v">'+v+(unit?' <small>'+unit+'</small>':'')+'</div></div>';}
+
+function render(){
+  const v=data.vehicle,f=data.fuel,e=data.engine,d=data.drive,fr=data.freshness;
+  $("#carName").textContent=v.name;
+  $("#carVin").textContent=v.vin+" · "+v.modelYear+"款 · "+v.seriesCode;
+  $("#rangeVal").textContent=f.rangeKm;
+  $("#fuelBar").style.width=f.levelPct+"%";
+  $("#fuelVal").textContent=f.levelPct+"% / "+f.capacity+"L";
+  $("#odoVal").textContent=f.odoKm.toLocaleString()+" km";
+  $("#effVal").textContent=f.avgConsumption+" L/100km";
+  $("#stCoolant").innerHTML=e.coolantTemp+' <small>°C</small>';
+  $("#stOil").textContent=e.oilLevel;
+  $("#stBattery").innerHTML=e.batteryVoltage+' <small>V</small>';
+
+  $("#engineBox").innerHTML=[
+    row("🌡","var(--blue-soft)","var(--blue)","冷却液温度","<b>"+e.coolantTemp+"°C</b>","engineCoolantTemperature"),
+    row("🛢","var(--amber-soft)","var(--amber)","机油液位","<b>"+e.oilLevel+"</b>","engineOilLevelStatus"),
+    row("🌡","var(--amber-soft)","var(--amber)","机油压力","<b>"+e.oilPressure+"</b>","engineOilPressureWarning"),
+    row("⚙","var(--purple-soft)","var(--purple)","机油温度","<b>"+e.oilTemp+"°C</b>","engineOilTemperature"),
+    row("💧","var(--blue-soft)","var(--blue)","刹车油液位","<b>"+e.brakeFluid+"</b>","brakeFluidLevelStatus"),
+    row("🔋","var(--purple-soft)","var(--purple)","电瓶电压","<b>"+e.batteryVoltage+" V</b>","batteryVoltage"),
+    row("⚙","var(--accent-soft)","var(--accent)","发动机状态","<b>"+e.engineStatus+"</b>","engineStatus"),
+    row("🔧","var(--amber-soft)","var(--amber)","机油保养提醒","<b>"+(e.oilService?"需保养":"正常")+"</b>","engineOilServiceWarning")
+  ].join("");
+
+  $("#driveGrid").innerHTML=
+    mini("车速",d.speed,"km/h","◉","var(--surface-3)","var(--text-3)")+
+    mini("转速",d.rpm,"rpm","⚙","var(--surface-3)","var(--text-3)")+
+    mini("挡位",d.gear,"","⇄","var(--surface-3)","var(--text-3)")+
+    mini("电子手刹",d.epb?"拉起":"释放","","⊘","var(--surface-3)","var(--text-3)")+
+    mini("瞬时油耗",f.instantConsumption,"L/100km","⛽","var(--amber-soft)","var(--amber)")+
+    mini("单次油耗",f.singleTripConsumption,"L/100km","◫","var(--blue-soft)","var(--blue)");
+
+  $("#freshness").innerHTML=[
+    row("◷","var(--surface-3)","var(--text-3)","最后更新","<b>"+esc(fr.lastUpdate)+"</b>","lastUpdateTime"),
+    row("↥","var(--surface-3)","var(--text-3)","上报时间","<b>"+esc(fr.reportTime)+"</b>","reportTime"),
+    row("↧","var(--surface-3)","var(--text-3)","云端入库","<b>"+esc(fr.upload)+"</b>","uploadTimestamp"),
+    row("◈","var(--surface-3)","var(--text-3)","数据来源","<b>"+esc(fr.source)+"</b>","dataTime")
+  ].join("");
+
+  const b=data.body;
+  $("#bodyBadge").textContent=b.lock;
+  $("#doors").innerHTML=b.doors.map(x=>row("▣","var(--surface-3)","var(--text-2)",x.n,"<b>"+x.v+"</b>")).join("")+
+    row("🔒","var(--accent-soft)","var(--accent)","中控锁","<b>"+b.lock+"</b>","lockStatus")+
+    row("⊞","var(--surface-3)","var(--text-2)","天窗","<b>"+b.sunroof+"</b>","sunroofStatus")+
+    row("▤","var(--surface-3)","var(--text-2)","后备箱","<b>"+b.trunk+"</b>","trunkStatus")+
+    row("◩","var(--surface-3)","var(--text-2)","前机盖","<b>"+b.hood+"</b>","hoodStatus");
+
+  $("#tyres").innerHTML=b.tyres.map(t=>row("◉",t.w?"var(--amber-soft)":"var(--accent-soft)",t.w?"var(--amber)":"var(--accent)",t.n,"<b>"+t.p+" bar</b> · "+t.t+"°C"+(t.w?" ⚠":""),"tyrePreWarning"+(t.w?" · 偏低":""))).join("");
+
+  $("#cabin").innerHTML=
+    row("♨","var(--surface-3)","var(--text-2)","座椅加热","<b>"+b.seatHeat+"</b>","seatHeatStatus")+
+    row("❄","var(--surface-3)","var(--text-2)","座椅通风","<b>"+b.seatVent+"</b>","seatVentStatus")+
+    row("☀","var(--surface-3)","var(--text-2)","外部灯光","<b>"+b.lighting+"</b>","lightStatus")+
+    row("❄","var(--blue-soft)","var(--blue)","空调状态","<b>"+b.ac+"</b>","airConditionStatus")+
+    row("🌡","var(--blue-soft)","var(--blue)","车内温度","<b>"+b.inCarTemp+"°C</b>","inCarTemperature")+
+    row("🌡","var(--surface-3)","var(--text-2)","车外温度","<b>"+b.outsideTemp+"°C</b>","outsideTemperature");
+
+  const h=data.health;
+  $("#maintBadge").textContent=h.maintenance.status;
+  $("#maintenance").innerHTML=
+    row("🛣","var(--accent-soft)","var(--accent)","距下次保养","<b>"+h.maintenance.distanceToService.toLocaleString()+" km</b>","distanceToService")+
+    row("◷","var(--surface-3)","var(--text-2)","上次保养","<b>"+h.maintenance.lastService+"</b>")+
+    row("◷","var(--surface-3)","var(--text-2)","预计下次","<b>"+h.maintenance.nextDate+"</b>")+
+    row("✓","var(--accent-soft)","var(--accent)","保养状态","<b>"+h.maintenance.status+"</b>","maintenanceStatus");
+
+  $("#warnCount").textContent=h.warnings.length+" 项";
+  $("#warnings").innerHTML=h.warnings.map(w=>row("!",w.c==="amber"?"var(--amber-soft)":"var(--surface-3)",w.c==="amber"?"var(--amber)":"var(--text-3)",w.n,"<b>"+w.lv+"</b>")).join("");
+  $("#diagnose").innerHTML=h.diagnose.items.map(x=>row("◈",x.v==="正常"?"var(--accent-soft)":"var(--amber-soft)",x.v==="正常"?"var(--accent)":"var(--amber)",x.n,"<b>"+x.v+"</b>")).join("");
+
+  const tr=data.trips,mx=Math.max.apply(null,tr.week);
+  $("#mileageChart").innerHTML=tr.week.map((v,i)=>'<div class="chart-col'+(i===tr.week.length-1?" active":(v>90?" warn":""))+'"><div class="chart-bar" style="height:'+Math.round(v/mx*86)+'%"></div><div class="chart-lbl">'+"日一二三四五六"[i]+'</div></div>').join("");
+  $("#weekTotal").textContent=tr.week.reduce((a,b)=>a+b,0)+" km";
+  $("#tripList").innerHTML=tr.list.map(t=>row("🧭","var(--surface-3)","var(--text-2)",t.d,"<b>"+t.km+" km</b> · "+t.fuel+" L",t.t+" · "+t.min+" 分钟 · "+t.start+"→"+t.end+" km")).join("");
+  const lc=tr.location;
+  $("#location").innerHTML=
+    row("📍","var(--blue-soft)","var(--blue)","位置描述","<b>"+esc(lc.address)+"</b>","address")+
+    row("⌖","var(--surface-3)","var(--text-3)","纬度 / 经度","<b>"+lc.lat+", "+lc.lng+"</b>","latitude / longitude")+
+    row("◷","var(--surface-3)","var(--text-3)","定位时间","<b>"+lc.time+"</b>","position time");
+}
+
+/* ===== 原创车模（SVG 示意图，非吉利官方资源） ===== */
+function carWheel(cx,cy,r){
+  let sp="";
+  for(let i=0;i<5;i++) sp+='<line x1="0" y1="0" x2="0" y2="'+( -(r-14) )+'" stroke="#8b95a3" stroke-width="3" transform="rotate('+(i*72)+')"/>';
+  return '<g transform="translate('+cx+','+cy+')"><circle r="'+r+'" fill="#14181d" stroke="#2b313b" stroke-width="3"/><circle r="'+(r-14)+'" fill="#afb9c5"/>'+sp+'<circle r="6" fill="#59636f"/></g>';
+}
+const CAR_DEFS='<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--car-hi)"/><stop offset=".55" stop-color="var(--car-body)"/><stop offset="1" stop-color="var(--car-lo)"/></linearGradient><linearGradient id="cglass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6b7c" stop-opacity=".92"/><stop offset="1" stop-color="#1c242e" stop-opacity=".95"/></linearGradient><radialGradient id="cshadow"><stop offset="0" stop-color="#000" stop-opacity=".30"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>';
+const CAR_SVGS={
+  side:CAR_DEFS+'<ellipse cx="350" cy="252" rx="290" ry="24" fill="url(#cshadow)"/>'+
+    '<path d="M 62 212 L 60 178 Q 60 158 80 152 L 158 140 L 216 100 Q 230 90 258 88 L 402 86 Q 432 86 452 96 L 508 146 L 588 154 Q 618 158 630 174 L 640 196 Q 642 212 626 214 L 566 214 A 46 46 0 0 0 474 214 L 216 214 A 46 46 0 0 0 124 214 L 70 214 Z" fill="url(#cg)" stroke="var(--car-stroke)" stroke-width="2" stroke-linejoin="round"/>'+
+    '<polygon points="236,106 406,104 478,148 176,148" fill="url(#cglass)"/>'+
+    '<line x1="332" y1="105" x2="332" y2="148" stroke="var(--car-stroke)" stroke-width="3"/>'+
+    '<path d="M 82 154 L 158 142" stroke="#ffffff" stroke-opacity=".16" stroke-width="2" fill="none"/>'+
+    '<path d="M 514 148 L 588 156" stroke="#ffffff" stroke-opacity=".18" stroke-width="2" fill="none"/>'+
+    '<path d="M 608 164 L 632 174 L 628 184 L 602 176 Z" fill="#dbeafe" opacity=".92"/>'+
+    '<path d="M 63 166 L 84 158 L 86 172 L 63 178 Z" fill="#f87171" opacity=".9"/>'+
+    carWheel(520,214,44)+carWheel(170,214,44),
+  top:CAR_DEFS+'<ellipse cx="340" cy="150" rx="275" ry="88" fill="url(#cshadow)"/>'+
+    '<rect x="110" y="86" width="460" height="128" rx="52" fill="url(#cg)" stroke="var(--car-stroke)" stroke-width="2"/>'+
+    '<path d="M 496 92 L 548 108 L 548 192 L 496 208 Z" fill="url(#cglass)"/>'+
+    '<path d="M 136 104 L 182 118 L 182 182 L 136 196 Z" fill="url(#cglass)"/>'+
+    '<rect x="278" y="112" width="128" height="76" rx="12" fill="url(#cglass)" stroke="var(--car-stroke)"/>'+
+    '<line x1="248" y1="90" x2="248" y2="210" stroke="var(--car-stroke)" stroke-width="1.5"/>'+
+    '<line x1="420" y1="90" x2="420" y2="210" stroke="var(--car-stroke)" stroke-width="1.5"/>'+
+    '<rect x="176" y="72" width="72" height="19" rx="8" fill="#1b2027"/><rect x="176" y="209" width="72" height="19" rx="8" fill="#1b2027"/>'+
+    '<rect x="470" y="72" width="72" height="19" rx="8" fill="#1b2027"/><rect x="470" y="209" width="72" height="19" rx="8" fill="#1b2027"/>'
+};
+const HOT={
+  side:[
+    {x:332,y:176,k:"主驾车门",f:"doorDriverStatus",v:b=>b.doors[0].v},
+    {x:248,y:176,k:"左后车门",f:"doorRearLeftStatus",v:b=>b.doors[2].v},
+    {x:520,y:214,k:"左前轮",f:"tyrePressureFrontLeft",v:b=>b.tyres[0].p+" bar · "+b.tyres[0].t+"°C",w:b=>b.tyres[0].w>0},
+    {x:170,y:214,k:"左后轮",f:"tyrePressureRearLeft",v:b=>b.tyres[2].p+" bar · "+b.tyres[2].t+"°C",w:b=>b.tyres[2].w>0},
+    {x:342,y:100,k:"天窗",f:"sunroofStatus",v:b=>b.sunroof},
+    {x:620,y:174,k:"外部灯光",f:"lightStatus",v:b=>b.lighting}
+  ],
+  top:[
+    {x:330,y:100,k:"主驾车门",f:"doorDriverStatus",v:b=>b.doors[0].v},
+    {x:330,y:200,k:"副驾车门",f:"doorPassengerStatus",v:b=>b.doors[1].v},
+    {x:240,y:100,k:"左后车门",f:"doorRearLeftStatus",v:b=>b.doors[2].v},
+    {x:240,y:200,k:"右后车门",f:"doorRearRightStatus",v:b=>b.doors[3].v},
+    {x:212,y:81,k:"左前轮",f:"tyrePressureFrontLeft",v:b=>b.tyres[0].p+" bar",w:b=>b.tyres[0].w>0},
+    {x:212,y:219,k:"左后轮",f:"tyrePressureRearLeft",v:b=>b.tyres[2].p+" bar",w:b=>b.tyres[2].w>0},
+    {x:506,y:81,k:"右前轮",f:"tyrePressureFrontRight",v:b=>b.tyres[1].p+" bar",w:b=>b.tyres[1].w>0},
+    {x:506,y:219,k:"右后轮",f:"tyrePressureRearRight",v:b=>b.tyres[3].p+" bar",w:b=>b.tyres[3].w>0},
+    {x:342,y:150,k:"天窗",f:"sunroofStatus",v:b=>b.sunroof},
+    {x:566,y:150,k:"前机盖",f:"hoodStatus",v:b=>b.hood},
+    {x:122,y:150,k:"后备箱",f:"trunkStatus",v:b=>b.trunk}
+  ]
+};
+let carView="side",carSel=null;
+function renderCar(){
+  if(!data||!data.body) return;
+  const spots=HOT[carView],b=data.body;
+  const hs=spots.map((s,i)=>'<g class="hot'+((s.w&&s.w(b))?" warn":"")+(carSel===i?" sel":"")+'" data-i="'+i+'" transform="translate('+s.x+','+s.y+')"><circle class="ring" r="13"/><circle class="core" r="5.5"/></g>').join("");
+  $("#carModel").innerHTML='<svg class="car-svg" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">'+CAR_SVGS[carView]+hs+'</svg>';
+  $("#carViewLbl").textContent=carView==="side"?"侧视":"俯视";
+  if(carSel===null){
+    $("#carInfo").innerHTML='<div class="ci-l">◉ <span>点击车模标记，查看该部位实时状态</span></div>';
+  }else{
+    const s=spots[carSel];
+    $("#carInfo").innerHTML='<div class="ci-l"><span class="row-ico" style="background:var(--accent-soft);color:var(--accent)">◉</span><b>'+esc(s.k)+'</b><span class="ci-f">'+s.f+'</span></div><div class="ci-v">'+esc(s.v(b))+'</div>';
+  }
+}
+
+const STEPS=[
+  ["1","注册吉利智能云并实名认证","portal.cloud.geely.com"],
+  ["2","创建应用，获取 AK / SK","API 中心 → 应用管理"],
+  ["3","确认车辆数据接口授权范围","关键决策点，决定能展示多少字段"],
+  ["4","实现 AK/SK 签名，打通首个接口","先调低敏端点验证"],
+  ["5","按 80+ 字段建数据模型与缓存","记录 lastUpdateTime"],
+  ["6","用本原型做 UI，聚合分散信息","完全自研视觉"],
+  ["7","只接只读端点，持续验证差异","不碰任何控制接口"]
+];
+function renderSteps(){
+  $("#steps").innerHTML=STEPS.map(s=>'<div class="row"><div class="row-l"><span class="row-ico" style="background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:11px">'+s[0]+'</span><div><div>'+s[1]+'</div><div class="row-sub">'+s[2]+'</div></div></div></div>').join("");
+}
+
+async function load(){
+  try{
+    data=await ADAPTERS[current].fetch();
+    const mock=current==="mock";
+    $("#statusDot").className="dot "+(mock?"mock":"live");
+    $("#statusTitle").textContent=mock?"Mock 数据源":"官方开放平台";
+    $("#statusMeta").textContent=mock?"演示模式":"已连接";
+    $("#brandSub").textContent="星瑞车况 · "+(mock?"演示":"实时")+" · 只读";
+    render();
+    renderCar();
+  }catch(e){
+    $("#statusDot").className="dot live";
+    $("#statusTitle").textContent="连接失败";
+    $("#statusMeta").textContent=e.message||"未知错误";
+    toast(e.message||"加载失败");
+  }
+}
+function switchPage(n){
+  $$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.page===n));
+  $$(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+n));
+  $$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.nav===n));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$$(".tab").forEach(t=>t.addEventListener("click",()=>switchPage(t.dataset.page)));
+$$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.nav)));
+$$(".chip[data-adapter]").forEach(c=>c.addEventListener("click",()=>{
+  $$(".chip[data-adapter]").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on"); current=c.dataset.adapter; load();
+}));
+$("#themeBtn").addEventListener("click",()=>{
+  const r=document.documentElement,nx=r.dataset.theme==="dark"?"light":"dark";
+  r.dataset.theme=nx; toast(nx==="dark"?"已切换深色":"已切换浅色");
+});
+$("#refreshBtn").addEventListener("click",()=>{load();toast("已刷新车况数据");});
+$("#carModel").addEventListener("click",e=>{
+  const g=e.target.closest(".hot"); if(!g) return;
+  carSel=+g.dataset.i; renderCar();
+});
+$$(".view-btn").forEach(b=>b.addEventListener("click",()=>{
+  $$(".view-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  carView=b.dataset.view; carSel=null; renderCar();
+}));
+$$(".car-color").forEach(b=>b.addEventListener("click",()=>{
+  $$(".car-color").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  $("#carStage").dataset.color=b.dataset.color;
+}));
+$("#applyBtn").addEventListener("click",()=>toast("portal.cloud.geely.com → 实名认证 → 创建应用"));
+$("#scopeBtn").addEventListener("click",()=>toast("车控需官方单独授权；勿逆向签名下发指令，详见报告第五节"));
+
+renderSteps();
+load();
+
+/* PWA: 注册 Service Worker（仅 https / localhost 生效） */
+if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+})();
+</script>
+</body>
+</html>
